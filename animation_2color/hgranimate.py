@@ -1,7 +1,7 @@
 from PIL import Image
 from math import *
 
-import ImageEnhance
+from PIL import ImageEnhance
 
 import shutil
 
@@ -13,22 +13,24 @@ import binascii
 
 def processImage(infile):
     try:
-        im = Image.open(infile)
+        series = Image.open(infile)
     except IOError:
-        print "Cant load", infile
+        print("Cant load", infile)
         sys.exit(1)
     i = 0
-    mypalette = im.getpalette()
+    mypalette = series.getpalette()
+    numframes = 0
 
     try:
         while 1:
+            im = series.copy().convert('P')
             im.putpalette(mypalette)
             new_im = Image.new("RGBA", im.size)
             new_im.paste(im)
             new_im.save('frame'+str(i)+'.png')
 
             i += 1
-            im.seek(im.tell() + 1)
+            series.seek(series.tell() + 1)
             numframes = i
 
     except EOFError:
@@ -124,7 +126,7 @@ def getStupidClosestColor(colorTuple):
     mindist = sqrt(255*255*3+1) # everything should be closer than this
 
 
-    for color, value in hgrRGBtuple.iteritems():
+    for color, value in hgrRGBtuple.items():
         #if (color == 'green') or (color == 'orange') or (color == 'black'):
         dist = sqrt(pow((value[0]-colorTuple[0]),2)+pow((value[1]-colorTuple[1]),2)+pow((value[2]-colorTuple[2]),2))
         if color == 'orange':
@@ -286,7 +288,7 @@ def getClosestColor(x,colorTuple):
     if ( x % 2 == 1):
         #odd pixel!
 
-        for color, value in oddColors.iteritems():
+        for color, value in oddColors.items():
             dist = sqrt(pow((value[0]-colorTuple[0]),2)+pow((value[1]-colorTuple[1]),2)+pow((value[2]-colorTuple[2]),2))
             if dist < mindist:
                 mindist = dist
@@ -297,7 +299,7 @@ def getClosestColor(x,colorTuple):
     if ( x % 2 == 0):
         #even pixel!
 
-        for color, value in evenColors.iteritems():
+        for color, value in evenColors.items():
             dist = sqrt(pow((value[0]- colorTuple[0]),2)+pow((value[1]-colorTuple[1]),2)+pow((value[2]-colorTuple[2]),2))
             if dist < mindist:
                 mindist = dist
@@ -618,12 +620,12 @@ def compress(file):
     infile = open(file,"rb").read()
     #outfile = open(compfile,'r+b')
 
-    bytes = []
+    bytes = list(infile)
 
     compbytes = []
 
-    for el in infile:
-        bytes.append(struct.unpack('B',el)[0])
+    # for el in infile:
+    #     bytes.append(struct.unpack('B',el)[0])
         
     #compbytes.append(bytes[0])
 
@@ -725,11 +727,11 @@ totalgaps = 0
 #
 
 if len(sys.argv) == 1:
-    print "USAGE: hgrdither.py [outputfilename] [inputgif] [brightness (float of order 1.0)] [videosize (normal,small,tiny)] [threshhold 0-255]"
+    print("USAGE: hgrdither.py [outputfilename] [inputgif] [brightness (float of order 1.0)] [videosize (normal,small,tiny)] [threshhold 0-255]")
     sys.exit()
 
 numframes = genFrames(sys.argv[2],float(sys.argv[3]),sys.argv[4]) + 1
-print "Number of frames to process: " + str(numframes) + str("\n")
+print("Number of frames to process: " + str(numframes) + str("\n"))
 
 #
 # INITIALIZE COMPONENTS OF BINARY VIDEO FILE
@@ -819,7 +821,7 @@ for n in range(0,numframes):
         keyframelength = keyFrame.__len__()
 
         if (keyframelength < diffFrame.__len__()) and ((totalkeylength+keyframelength) < 18000): #tweak
-            print "WRITING KEYFRAME"
+            print("WRITING KEYFRAME")
             for keyByte in keyFrame:
                 f_keys.write(struct.pack('B',keyByte))
 
@@ -834,8 +836,8 @@ for n in range(0,numframes):
 
         os.remove(sys.argv[1]+str(n))
         
-        print "Frame diff length:" + str(diffFrame.__len__())
-        print "Keyframe length:" + str(keyframelength) + "\n"
+        print("Frame diff length:" + str(diffFrame.__len__()))
+        print("Keyframe length:" + str(keyframelength) + "\n")
 
     if n == 0:
         os.remove(sys.argv[1]+str(n))
